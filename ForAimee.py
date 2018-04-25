@@ -67,10 +67,10 @@ while True:
         wt_logfile.close()
         break
     elif choice == '3':
-        text = u'选择了3, 将直接退出'
+        print (u'选择了3, 将直接退出')
         time.sleep(1)
         break
     else:
-        text = u'选择错误, 请重新选择!'
+        print (u'选择错误, 请重新选择!')
 
 sys.exit(0)
