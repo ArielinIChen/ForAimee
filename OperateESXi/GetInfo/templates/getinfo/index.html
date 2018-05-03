@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+    <script src="{% static "js/jquery-1.11.1.min.js" %}"></script>
+</head>
+<body>
+{#<form method="post">#}
+{#    {% csrf_token %}#}
+{#    输入宿主机的IP地址:<br>#}
+{#    {{ cluster_form }}<br><br>#}
+{#    <input type="submit" value="查询这个宿主机的真实信息" name="getstatus"><br><br>#}
+{#    <input type="submit" value="查询这个宿主机在db中的信息" name="getinfo"><br><br>#}
+{#    <input type="submit" value="更新这个宿主机在db中的信息" name="resetinfo"><br><br>#}
+{#    <input type="submit" value="关闭这个宿主机中的虚拟机" name="shutdown"><br><br>#}
+{#    <input type="submit" value="开启这个宿主机中的被关闭的虚拟机" name="poweron"><br><br>#}
+{#    <input type="submit" value="创建这个宿主机中的虚拟机信息" name="createvmsinfo"><br><br>#}
+{#</form>#}
+
+<p id="p1">P1输入cluster的IP地址：</p>
+<form id="form1">
+    <input type="text" id="clusterip_1"
+           class="clusterip_class_1" name="cluster_ip"
+           placeholder="Cluster IP address">
+</form>
+<button id="status_btn" class="btn1">查询实时的状态</button>
+<button id="info_btn" class="btn1">查询数据库中的信息</button>
+<button id="reset_info_btn" class="btn1">更新数据库中的信息</button>
+<button id="poweroff_btn" class="btn1">关闭虚拟机</button>
+<button id="poweron_btn" class="btn1">开启(被关闭的)虚拟机</button>
+<button id="auto_start_off_btn" class="btn1">虚拟机与系统一起启动 —— 关闭</button>
+<button id="auto_start_on_btn" class="btn1">虚拟机与系统一起启动 —— 开启</button>
+<ul class="box_form1"></ul>
+<script>
+    $(document).ready(function () {
+        $("button#status_btn").click(function () {
+            var mytext = $("form#form1").serialize();
+            $.ajax({
+                type: "get",
+                url: "/vms_status/",
+                dataType: "json",
+                data: mytext,
+                success: function (res) {
+                    console.log(res);
+                    var html = "";
+                    var mydata = res;
+                    for (var i = 0; i < mydata.length; i++){
+                        html += '<li>';
+                        html += '<span>Name: ' + mydata[i].Name + '</span><br>';
+                        html += '<span>Uuid: '+ mydata[i].instanceUuid + '</span><br>';
+                        html += '<span>IPaddr: '+ mydata[i].IP + '</span><br>';
+                        html += '<span>PowerStatus: ' + mydata[i].powerStatus + '</span>';
+                        html += '</li><br>';
+                    }
+                    $("ul.box_form1").html(html);
+                },
+                error: function (err) {
+                    console.log(err);
+                    alert('aaaa');
+                }
+            })
+        });
+        $("button#info_btn").click(function () {
+            var mytext = $("form#form1").serialize();
+            $.ajax({
+                type: "get",
+                url: "/vms_info/",
+                dataType: "json",
+                data: mytext,
+                success: function (res) {
+                    console.log(res);
+                    var mydata = res;
+                    var html = "";
+                    for (var i = 0; i < mydata.length; i++) {
+                        html += '<li>';
+                        html += '<span>Cluster: ' + mydata[i].Cluster + '</span><br>';
+                        html += '<span>IPaddr: ' + mydata[i].IP + '</span><br>';
+                        html += '<span>powerStatus: ' + mydata[i].powerStatus + '</span><br>';
+                        html += '<span>Uuid: ' + mydata[i].instanceUuid + '</span><br>';
+                        html += '</li><br>';
+                    }
+                    $("ul.box_form1").html(html);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            })
+        });
+        $("button#reset_info_btn").click(function () {
+            var params = $("form#form1").serializeArray();
+            var values = {};
+            for (var x in params) {
+                values[params[x].name] = params[x].value;
+            }
+            console.log(values);
+            $.ajax({
+                type: "post",
+                url: "/vms_info/",
+                dataType: "json",
+                data: JSON.stringify(values),
+                success: function (res) {
+                    console.log(res);
+                    var html = '';
+                    if (res.length = 1) {
+                        tmp_data = res[0];
+                        for (mykey in tmp_data) {
+                            html += '<li>';
+                            html += '<span>' + mykey + ': ' + tmp_data[mykey] + '</span><br>';
+                            html += '</li><br>';
+                        }
+                    }
+                    else {
+                        var mydata = res;
+                        var my_lst = ['now', 'old', 'deleted'];
+                        for (var i in my_lst) {
+                            html += '<p><b>' + my_lst[i] + '</p></b>';
+                            for (var j in mydata[my_lst[i]]) {
+                                var tmp_data = mydata[my_lst[i]][j];
+                                html += '<li>';
+                                html += '<span>Cluster: ' + tmp_data.Cluster + '</span><br>';
+                                html += '<span>IP: ' + tmp_data.IP + '</span><br>';
+                                html += '<span>powerStatus: ' + tmp_data.powerStatus + '</span><br>';
+                                html += '<span>Uuid: ' + tmp_data.instanceUuid + '</span><br>';
+                                html += '</li><br>';
+                            }
+                        }
+                    }
+                    $("ul.box_form1").html(html);
+                },
+                error: function (err) {
+{#                    console.log(err);#}
+                    alert(err);
+                }
+            })
+        });
+        $("button#poweroff_btn").click(function () {
+            var params = $("form#form1").serializeArray();
+            var values = {};
+            for (var x in params) {
+                values[params[x].name] = params[x].value;
+            }
+            console.log(values);
+            $.ajax({
+                type: "post",
+                url: "/vms_power_off/",
+                dataType: "json",
+                data: JSON.stringify(values),
+                success: function (res) {
+                    var html = '';
+                    for (var mykey in res) {
+                        html += '<li>';
+                        html += '<span>' + mykey + ' : ' + res[mykey] + '</span><br>';
+                        html += '</li><br>';
+                    }
+                    $("ul.box_form1").html(html);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            })
+        });
+        $("button#poweron_btn").click(function () {
+            var params = $("form#form1").serializeArray();
+            var values = {};
+            for (var x in params) {
+                values[params[x].name] = params[x].value;
+            }
+            console.log(values);
+            $.ajax({
+                type: "post",
+                url: "/vms_power_on/",
+                dataType: "json",
+                data: JSON.stringify(values),
+                success: function (res) {
+                    var html = '';
+                    for (var mykey in res) {
+                        html += '<li>';
+                        html += '<span>' + mykey + ' : ' + res[mykey] + '</span><br>';
+                        html += '</li><br>';
+                    }
+                    $("ul.box_form1").html(html);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            })
+        });
+        $("button#auto_start_off_btn").click(function () {
+            var params = $("form#form1").serializeArray();
+            var values = {};
+            for (var x in params) {
+                values[params[x].name] = params[x].value;
+            }
+            values["start_opt"] = 0;
+            console.log(values);
+            $.ajax({
+                type: "post",
+                url: "/vms_auto_start/",
+                dataType: "json",
+                data: JSON.stringify(values),
+                success: function (res) {
+                    var html = '';
+                    for (var mykey in res) {
+                        html += '<li>';
+                        html += '<span>' + mykey + ' : ' + res[mykey] + '</span><br>';
+                        html += '</li><br>';
+                    }
+                    $("ul.box_form1").html(html);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            })
+        });
+        $("button#auto_start_on_btn").click(function () {
+            var params = $("form#form1").serializeArray();
+            var values = {};
+            for (var x in params) {
+                values[params[x].name] = params[x].value;
+            }
+            values["start_opt"] = 1;
+            console.log(values);
+            $.ajax({
+                type: "post",
+                url: "/vms_auto_start/",
+                dataType: "json",
+                data: JSON.stringify(values),
+                success: function (res) {
+                    var html = '';
+                    for (var mykey in res) {
+                        html += '<li>';
+                        html += '<span>' + mykey + ' : ' + res[mykey] + '</span><br>';
+                        html += '</li><br>';
+                    }
+                    $("ul.box_form1").html(html);
+                },
+                error: function (err) {
+                    console.log(err);
+                }
+            })
+        })
+    })
+</script>
+</body>
+</html>
