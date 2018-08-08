@@ -193,7 +193,7 @@ def _chk_profit_src(src_dir, err_src_dir, wt_logfile):
     return
 
 
-def chk_folder(src_dir, dst_dir, err_dir, wt_logfile):
+def chk_folder(src_dir, wt_logfile, dst_dir=None, err_dir=None):
     # err_dir 为[z有错误的报表] (文件夹)
     #   根据错误类型, 向下细分文件/文件夹
     #   初始化时 清空/删除 && 重建文件夹
@@ -204,15 +204,9 @@ def chk_folder(src_dir, dst_dir, err_dir, wt_logfile):
     #   已存在 且 为文件时: 加上 backup_at_时间戳 标记, 然后后自动备份到同级目录, 再创建文件夹
     #   已存在 且 为空文件夹时: pass
     #   已存在 且 不为空文件夹时: 选择是否需要(自动)备份, 自动备份文件夹为: 处理后报表-历史备份
-    # 开始检查err_dir
-    text = u'开始检查 %s ...\n' % err_dir
-    output_info_redirect(text, wt_logfile)
-
-    _del_path(err_dir, wt_logfile, re_create=1)
 
     # 开始检查src_dir
-    text = u'\n检查完毕!\n\n' \
-           u'开始检查 %s...' % src_dir
+    text = u'开始检查 %s...' % src_dir
     output_info_redirect(text, wt_logfile)
     if not os.path.isdir(src_dir):
         # 没有 src_dir 或 src_dir 不为文件夹时
@@ -233,67 +227,76 @@ def chk_folder(src_dir, dst_dir, err_dir, wt_logfile):
         raw_input()
         time.sleep(1)
         sys.exit(1)
+    else:
+        output_info_redirect(u'\n检查完毕!\n\n', wt_logfile)
 
     # 开始检查dst_dir
-    text = u'\n检查完毕!\n\n' \
-           u'开始检查 %s...' % dst_dir
-    output_info_redirect(text, wt_logfile)
-    if not os.path.exists(dst_dir):
-        os.mkdir(dst_dir)
-    elif os.path.isfile(dst_dir):
-        now_time = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime(time.time()))
-        dst_dir_file_back = dst_dir + '_backup_at_' + now_time
-        shutil.move(dst_dir, dst_dir_file_back)
-        os.mkdir(dst_dir)
-    elif len(os.listdir(dst_dir)) != 0:
-        # dst_dir 不为空文件夹时的处理
-        while True:
-            print (u'警告! 警告! 警告!\n'
-                   u'警告! 警告! 警告!\n'
-                   u'%s 不是空文件夹, 需要进行一下哪项操作:\n'
-                   u'1: 自动备份到同级的 [处理后报表-历史备份] 目录(该目录原有文件将被删除)\n'
-                   u'2: 退出脚本, 手动备份\n'
-                   u'3: 直接删除该文件夹下内容\n' % dst_dir)
-            get_var = raw_input()
+    if dst_dir:
+        output_info_redirect(u'开始检查 %s...' % dst_dir, wt_logfile)
+        if not os.path.exists(dst_dir):
+            os.mkdir(dst_dir)
+        elif os.path.isfile(dst_dir):
+            now_time = time.strftime('%Y-%m-%d_%H-%M-%S', time.localtime(time.time()))
+            dst_dir_file_back = dst_dir + '_backup_at_' + now_time
+            shutil.move(dst_dir, dst_dir_file_back)
+            os.mkdir(dst_dir)
+        elif len(os.listdir(dst_dir)) != 0:
+            # dst_dir 不为空文件夹时的处理
+            while True:
+                print (u'警告! 警告! 警告!\n'
+                       u'警告! 警告! 警告!\n'
+                       u'%s 不是空文件夹, 需要进行一下哪项操作:\n'
+                       u'1: 自动备份到同级的 [处理后报表-历史备份] 目录(该目录原有文件将被删除)\n'
+                       u'2: 退出脚本, 手动备份\n'
+                       u'3: 直接删除该文件夹下内容\n' % dst_dir)
+                get_var = raw_input()
 
-            if get_var == '1':
-                text = u'\n选择了1(自动备份), 系统将在清空 [处理后报表-历史备份] 文件夹后, 再进行备份...\n'
-                output_info_redirect(text, wt_logfile)
+                if get_var == '1':
+                    text = u'\n选择了1(自动备份), 系统将在清空 [处理后报表-历史备份] 文件夹后, 再进行备份...\n'
+                    output_info_redirect(text, wt_logfile)
 
-                mypath = os.path.dirname(dst_dir)
-                cp_to_dir = os.path.join(mypath, u'处理后报表-历史备份')
-                _del_path(cp_to_dir, wt_logfile, re_create=0)
-                text = u'清空完毕, 开始备份...'
-                output_info_redirect(text, wt_logfile)
+                    mypath = os.path.dirname(dst_dir)
+                    cp_to_dir = os.path.join(mypath, u'处理后报表-历史备份')
+                    _del_path(cp_to_dir, wt_logfile, re_create=0)
+                    text = u'清空完毕, 开始备份...'
+                    output_info_redirect(text, wt_logfile)
 
-                shutil.move(dst_dir, cp_to_dir)
-                os.makedirs(dst_dir)
-                text = u'备份完毕!'
-                output_info_redirect(text, wt_logfile)
-                break
-            elif get_var == '2':
-                text = u'\n选择了2(手动备份), 系统将在2秒后退出\n'
-                output_info_redirect(text, wt_logfile)
-                time.sleep(2)
-                sys.exit(0)
-            elif get_var == '3':
-                text = u'\n选择了3(直接删除), 系统将直接删除 %s 文件内容' % dst_dir
-                output_info_redirect(text, wt_logfile)
+                    shutil.move(dst_dir, cp_to_dir)
+                    os.makedirs(dst_dir)
+                    text = u'备份完毕!'
+                    output_info_redirect(text, wt_logfile)
+                    break
+                elif get_var == '2':
+                    text = u'\n选择了2(手动备份), 系统将在2秒后退出\n'
+                    output_info_redirect(text, wt_logfile)
+                    time.sleep(2)
+                    sys.exit(0)
+                elif get_var == '3':
+                    text = u'\n选择了3(直接删除), 系统将直接删除 %s 文件内容' % dst_dir
+                    output_info_redirect(text, wt_logfile)
 
-                _del_path(dst_dir, wt_logfile, re_create=1)
-                text = u'删除完毕!'
-                output_info_redirect(text, wt_logfile)
-                break
+                    _del_path(dst_dir, wt_logfile, re_create=1)
+                    text = u'删除完毕!'
+                    output_info_redirect(text, wt_logfile)
+                    break
+    # 开始检查err_dir
+    if err_dir:
+        text = u'开始检查 %s ...\n' % err_dir
+        output_info_redirect(text, wt_logfile)
 
-    text = u'\n开始检查子文件/子文件夹...'
-    output_info_redirect(text, wt_logfile)
+        _del_path(err_dir, wt_logfile, re_create=1)
 
-    pjt_name = os.path.dirname(src_dir).split(os.path.sep)[-1]
-    err_src_dir = os.path.join(err_dir, u'有错误的原始报表')
-    if pjt_name == u'金蝶报表切割':
-        _chk_kingdee_src(src_dir, err_src_dir, wt_logfile)
-    elif pjt_name == u'利润表':
-        _chk_profit_src(src_dir, err_src_dir, wt_logfile)
+        output_info_redirect(u'\n检查完毕!\n\n', wt_logfile)
+
+        text = u'\n开始检查子文件/子文件夹...'
+        output_info_redirect(text, wt_logfile)
+
+        pjt_name = os.path.dirname(src_dir).split(os.path.sep)[-1]
+        err_src_dir = os.path.join(err_dir, u'有错误的原始报表')
+        if pjt_name == u'金蝶报表切割':
+            _chk_kingdee_src(src_dir, err_src_dir, wt_logfile)
+        elif pjt_name == u'利润表':
+            _chk_profit_src(src_dir, err_src_dir, wt_logfile)
     return
 
 
