@@ -5,6 +5,7 @@ import time
 from common import chk_folder, copy_files, output_info_redirect
 import KingdeeFileCut
 import ProfitCalculate
+from cost_proportion import chk_proportion_file, merge_proportion_result
 
 
 def create_logfile(pj_name):
@@ -40,7 +41,8 @@ while True:
            u'请选择需要操作的项目: \n'
            u'1: 处理金蝶导出文件 \n'
            u'2: 利润表 \n'
-           u'3: 直接退出 \n')
+           u'3: 费用占比 \n'
+           u'4: 直接退出 \n')
     choice = raw_input()
 
     if choice == '1':
@@ -56,11 +58,11 @@ while True:
         dst_dir = u'E:\报表处理\金蝶报表切割\处理后报表'
         err_dir = u'E:\报表处理\金蝶报表切割\\z有错误的报表'
 
-        chk_folder(src_dir, dst_dir, err_dir, wt_logfile=wt_logfile)
+        chk_folder(src_dir, wt_logfile, dst_dir, err_dir)
         copy_files(src_dir, dst_dir, tag='file', wt_logfile=wt_logfile)
         KingdeeFileCut.core_method(dst_dir, err_dir, wt_logfile=wt_logfile)
-
         break
+
     elif choice == '2':
         wt_logfile = create_logfile('profit')
 
@@ -74,13 +76,30 @@ while True:
         dst_dir = u'E:\报表处理\利润表\处理后报表'
         err_dir = u'E:\报表处理\利润表\\z有错误的报表'
 
-        chk_folder(src_dir, dst_dir, err_dir, wt_logfile=wt_logfile)
+        chk_folder(src_dir, wt_logfile, dst_dir, err_dir)
         copy_files(src_dir, dst_dir, tag='tree', wt_logfile=wt_logfile)
         ProfitCalculate.core_method(dst_dir, err_dir, wt_logfile=wt_logfile)
+        break
+
+    elif choice == '3':
+        wt_logfile = create_logfile('proportion')
+
+        text = u'选择了3\n' + \
+               u'##' * 14 + '\n' + \
+               u'# 开始运行 费用占比统计脚本 #\n' + \
+               u'##' * 14
+        output_info_redirect(text, wt_logfile)
+
+        dst_path = u'E:\报表处理\费用占比'
+        file_path = chk_proportion_file(dst_path, wt_logfile)
+        src_dir = u'E:\报表处理\费用占比\原始报表'
+        chk_folder(src_dir, wt_logfile)
+        merge_proportion_result(file_path, src_dir, wt_logfile)
 
         break
-    elif choice == '3':
-        print (u'选择了3, 将直接退出')
+
+    elif choice == '4':
+        print (u'选择了4, 将直接退出')
         time.sleep(1)
         break
     else:
