@@ -111,16 +111,22 @@ def core_method(dst_dir, err_dir, wt_logfile):
             text = u'删除完毕！\n'
             output_info_redirect(text, wt_logfile)
 
-            # 删除 '科目代码' 属于del_list的行
-            del_list = ['1001', '1002.001', '1002.002', '1002.003', '1002.004 ',
-                        '1122.01', '1122.02', '1122.03', '1122.05',
-                        '1221.04.001', '1221.04.002', '1221.04.003', '1405.01.01', '1405.01.02',
-                        '2221.01.01.01', '2221.01.01.02', '2221.01.01.03',
-                        '2241.04.001', '2241.04.002', '2203.01.001', '2203.01.003',
-                        '1301.02.001.0001', '1301.02.001.0002']
-            text = u'开始删除 科目代码 在列表中的行\n' \
-                   u'该列表为:\n' \
-                   u'%s' % del_list
+            # 【原】删除 '科目代码' 属于del_list的行
+            # 【现】删除 '科目代码' 不以 6 开头, 或属于del_list的行
+            # old_del_list = ['1001', '1002.001', '1002.002', '1002.003', '1002.004',
+            #             '1122.01', '1122.02', '1122.03', '1122.05',
+            #             '1221.04.001', '1221.04.002', '1221.04.003', '1405.01.01', '1405.01.02',
+            #             '2221.01.01.01', '2221.01.01.02', '2221.01.01.03',
+            #             '2241.04.001', '2241.04.002', '2203.01.001', '2203.01.003',
+            #             '1301.02.001.0001', '1301.02.001.0002',
+            #             '6403.01', '6403.02', '6403.03', '6403.04', '6403.05', '6403.06', '6403.07',
+            #             '6403.08', '6403.09', '6403.10', '6403.11', '6403.12', '6403.13']
+            del_list = ['6401.98', '6602.17.001', '6401.01.003.0002']
+            # text = u'开始删除 科目代码 在列表中的行\n' \
+            #        u'该列表为:\n' \
+            #        u'%s' % del_list
+            text = u'开始删除 科目代码 不以 6 开头\n' \
+                   u'或等于 6401.98, 6602.17.001, 6401.01.003.0002的行\n'
             output_info_redirect(text, wt_logfile)
 
             ori_rb = xlrd.open_workbook(file_path, formatting_info=True)
@@ -132,10 +138,14 @@ def core_method(dst_dir, err_dir, wt_logfile):
 
             while i < len(col_subject):
                 del_line = i + 1
-                if str(col_subject[i]) in del_list:
+                if not str(col_subject[i]).startswith('6') or str(col_subject[i]) in del_list:
                     col_subject.remove(col_subject[i])
                     xlsht.Rows(del_line).Delete()
                     i -= 1
+                # if str(col_subject[i]) in del_list:
+                #     col_subject.remove(col_subject[i])
+                #     xlsht.Rows(del_line).Delete()
+                #     i -= 1
                 i += 1
             # xlbook.Save()
             xlbook.Close(SaveChanges=True)
